@@ -23,8 +23,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "nutria-sportswear-db",
-      "database_id": "00000000-0000-4000-8000-000000000000"
+      "database_name": "nutria-sportswear",
+      "database_id": "bc652a02-922a-4179-9026-68acd7ea8332"
     }
   ],
   "r2_buckets": [
