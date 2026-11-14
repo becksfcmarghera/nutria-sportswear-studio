@@ -1,0 +1,13 @@
+{
+  "name": "nutria-sportswear-cloudflare-deployment",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix cloudflare ci && npm --prefix cloudflare run build",
+    "deploy": "node cloudflare/node_modules/wrangler/bin/wrangler.js deploy",
+    "preview": "node cloudflare/node_modules/wrangler/bin/wrangler.js versions upload"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

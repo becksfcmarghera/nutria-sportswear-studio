@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nutria Sportswear Studio</title>
+<link rel="preload" href="./assets/nutria-logo.png" as="image">
+
+
+
+
+<style>
+:root{--gold:#d7a928;--black:#080909;--panel:#151718;--muted:#a8adaf;--line:#2b3032}
+*{box-sizing:border-box}
+body{margin:0;background:var(--black);color:#f6f6f3;font-family:Arial,Helvetica,sans-serif}
+header{padding:18px clamp(18px,4vw,54px);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);gap:16px}
+.brand{display:flex;align-items:center;gap:13px}
+.brand-logo{width:78px;height:58px;object-fit:contain;display:block}
+.brand-logo-fallback{width:45px;height:45px;border:2px solid var(--gold);border-radius:50%;display:none;place-items:center;color:var(--gold);font-weight:900;font-size:20px;font-style:italic}
+.brand strong{display:block;letter-spacing:2px;font-size:15px}.brand span{display:block;color:var(--muted);font-size:10px;letter-spacing:4px;margin-top:4px}
+.pill{border:1px solid #625020;color:#f0d57e;border-radius:30px;padding:9px 13px;font-size:11px;letter-spacing:1px}
+main{max-width:1240px;margin:auto;padding:38px 20px 60px}.intro{margin-bottom:25px}.eyebrow{color:var(--gold);font-size:11px;letter-spacing:3px;text-transform:uppercase}.intro h1{font-size:clamp(30px,5vw,52px);line-height:1.02;margin:12px 0}.intro p{color:var(--muted);max-width:680px;line-height:1.6;margin:0}
+.layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr);gap:18px}
+.viewer,.controls{background:linear-gradient(145deg,#171a1b,#0f1112);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.viewer-top{padding:16px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)}
+#stage{height:560px;position:relative;background:radial-gradient(ellipse at 50% 48%,#303232 0%,#181a1b 43%,#101112 76%);touch-action:none}
+#stage canvas{display:block;width:100%;height:100%}
+.hint{position:absolute;bottom:15px;left:15px;color:#c0c3c1;font-size:11px;background:#0008;padding:9px 11px;border-radius:20px;pointer-events:none}
+.loading{position:absolute;inset:0;display:grid;place-items:center;background:#101112;color:#d7a928;font-size:13px;letter-spacing:1px;z-index:3}
+.loading.error{color:#ff8b8b;padding:30px;text-align:center;line-height:1.6}
+.controls{padding:22px}.controls h2{font-size:19px;margin:0 0 6px}.sub{font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 22px}
+.field{margin:19px 0}.field label{display:block;font-size:12px;color:#d5d6d3;margin-bottom:10px}
+.products{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+button,.upload-label{cursor:pointer;border:1px solid #373c3d;background:#202324;color:#eee;border-radius:10px;padding:12px 10px;font-size:12px;text-align:center}
+button:hover,.upload-label:hover{border-color:var(--gold)}button.active{border-color:var(--gold);background:#302817;color:#f6d56b}
+.colors{display:flex;gap:10px;flex-wrap:wrap}.swatch{width:32px;height:32px;border-radius:50%;padding:0;border:2px solid #fff4}.swatch.active{outline:2px solid var(--gold);outline-offset:3px}
+input[type=file]{display:none}.upload-label{display:block;width:100%;margin-top:8px}.small{font-size:11px;color:var(--muted);line-height:1.5;margin-top:8px}
+input[type=text],input[type=email],input[type=number],textarea{width:100%;background:#0b0d0e;border:1px solid #383d3e;color:white;padding:12px;border-radius:9px;font:inherit;font-size:13px}
+textarea{min-height:70px;resize:vertical}.primary{width:100%;background:var(--gold);border:0;color:#12110b;font-weight:800;letter-spacing:1px;padding:15px;margin-top:10px}.primary:hover{background:#f0c94f}
+.notice{font-size:11px;color:#e9d38c;background:#292315;border:1px solid #57451c;border-radius:9px;padding:10px;line-height:1.5;margin-top:15px}
+footer{max-width:1240px;margin:auto;padding:0 20px 30px;color:#73797a;font-size:11px;line-height:1.6}
+@media(max-width:800px){.layout{grid-template-columns:1fr}#stage{height:440px}.controls{padding:18px}header{align-items:flex-start}.pill{display:none}.products{grid-template-columns:1fr}}
+
+.top-nav{display:flex;align-items:center;gap:8px}
+.top-nav a{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;
+border:1px solid #5c4a12;border-radius:999px;padding:9px 14px;color:#e5b722;
+font-size:11px;font-weight:700;letter-spacing:.7px;white-space:nowrap}
+.top-nav a:hover{background:#e5b722;color:#090a0a}
+.top-nav a.active{background:#2b2307;color:#f2c329;border-color:#d7a928}
+@media(max-width:700px){.top-nav{gap:5px}.top-nav a{padding:7px 9px;font-size:9px}}
+
+
+
+/* ===== UI CONTROLLI V6.37: solo presentazione, nessun ID/logica modificati ===== */
+.controls{
+  background:linear-gradient(180deg,#151819 0%,#0e1011 100%);
+  border-color:#34393b;
+}
+.controls h2{font-size:22px;letter-spacing:-.02em}
+.controls .sub{margin-bottom:14px}
+.control-guide{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:6px;
+  margin:0 0 16px;padding:8px;background:#0a0c0d;border:1px solid #2c3133;border-radius:12px;
+}
+.control-guide span{
+  text-align:center;padding:7px 5px;border-radius:8px;background:#171b1c;
+  color:#bfc4c5;font-size:10px;font-weight:800;letter-spacing:.04em;
+}
+.control-guide span b{color:var(--gold);display:block;font-size:11px;margin-bottom:2px}
+.control-group-title{
+  margin:22px 0 8px;padding:0 2px 8px;border-bottom:1px solid #34393b;
+  color:var(--gold);font-size:11px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;
+}
+.field{
+  margin:10px 0 14px!important;padding:15px!important;
+  background:#121516;border:1px solid #2d3234;border-radius:13px;
+  box-shadow:0 8px 22px rgba(0,0,0,.12);
+}
+.field>label:first-child{
+  color:#fff;font-size:12px;font-weight:900;letter-spacing:.04em;margin-bottom:12px;
+}
+.field>label:first-child::first-letter{color:var(--gold)}
+.field label{line-height:1.25}
+.field small{color:#adb4b6;font-size:10px;font-weight:800;letter-spacing:.02em}
+.field input[type="range"]{margin-top:6px;accent-color:#d7a928}
+.field input[type="color"]{border-radius:9px;overflow:hidden;border:1px solid #4a5052;background:#0c0e0f}
+.field input[type="text"],.field input[type="email"],.field input[type="number"],.field select,.field textarea{
+  border-color:#42484a;background:#090b0c;
+}
+.field .products button{min-height:39px}
+.upload-label{border-style:dashed!important;background:#0d1011!important;font-weight:800!important}
+.small{margin-top:7px;line-height:1.4}
+.section-title{color:var(--gold)!important;font-weight:900!important;letter-spacing:.08em}
+.controls hr{border-color:#34393b!important}
+@media(max-width:800px){
+  .control-guide{grid-template-columns:1fr 1fr 1fr}
+  .field{padding:13px!important}
+}
+
+
+.controls-head{margin-bottom:14px}.eyebrow{font-size:10px;font-weight:900;letter-spacing:.16em;color:var(--gold);margin-bottom:5px}
+.control-section{border:1px solid #303638;border-radius:14px;background:#101314;margin:10px 0;overflow:hidden}
+.control-section>summary{list-style:none;display:flex;align-items:center;gap:11px;padding:14px 15px;cursor:pointer;background:#171b1c;user-select:none}
+.control-section>summary::-webkit-details-marker{display:none}.control-section>summary::after{content:'+';margin-left:auto;color:var(--gold);font-size:20px;font-weight:400}.control-section[open]>summary::after{content:'−'}
+.control-section>summary b{display:block;font-size:13px;color:#fff}.control-section>summary small{display:block;margin-top:2px;color:#8f989b;font-size:10px;font-weight:500;letter-spacing:0}
+.step-dot{width:25px;height:25px;flex:0 0 25px;border-radius:50%;display:grid;place-items:center;background:#332b0b;border:1px solid #826a12;color:#f0c339;font-weight:900;font-size:11px}
+.section-body{padding:4px 12px 13px}.compact-field{padding:11px!important;margin:9px 0!important;background:#15191a!important}.compact-field>label:first-child{color:#fff!important;font-weight:900!important;letter-spacing:.04em!important}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}.control-row{margin-top:10px}.control-row input[type=color],.color-controls input[type=color],#textColor{width:100%;height:40px}
+.slider-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:10px}.slider-grid input[type=range]{width:100%}.name-number-row{display:grid;grid-template-columns:1.4fr .6fr;gap:8px;margin-bottom:8px}
+.advanced-controls{margin-top:10px;border-top:1px solid #2d3234;padding-top:8px}.advanced-controls>summary{cursor:pointer;color:#d7a928;font-size:11px;font-weight:900;list-style:none}.advanced-controls>summary::before{content:'⚙ ';font-size:10px}.advanced-controls>summary::-webkit-details-marker{display:none}
+.fixed-brand-note{display:grid;gap:3px;padding:12px 13px;margin:10px 0;border:1px solid #6f5a10;border-radius:11px;background:#1e1a0b}.fixed-brand-note b{color:#f1cb45;font-size:12px}.fixed-brand-note span{color:#b7b9b4;font-size:10px;line-height:1.4}
+.sponsor-card{border-left:2px solid #6e5a13!important}.pattern-grid{max-height:330px;overflow:auto;padding-right:4px}.pattern-grid::-webkit-scrollbar{width:5px}.pattern-grid::-webkit-scrollbar-thumb{background:#4e5557;border-radius:20px}
+@media(max-width:600px){.two-col,.slider-grid,.name-number-row{grid-template-columns:1fr}.control-section>summary{padding:12px}.pattern-grid{max-height:260px}}
+
+
+
+/* ===== V6.40 UI SUPER PULITA - SOLO INTERFACCIA ===== */
+.controls{position:relative}
+.controls-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.controls-head-copy{min-width:0}
+.controls-head .sub{margin:4px 0 0}
+.quick-nav{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:12px 0 14px;padding:8px;background:#090b0c;border:1px solid #2b3032;border-radius:13px;position:sticky;top:8px;z-index:20;backdrop-filter:blur(10px)}
+.quick-nav button{padding:9px 6px;min-height:50px;background:#131718;border-color:#303638;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.quick-nav button strong{font-size:11px;color:#fff}.quick-nav button span{font-size:9px;color:#8f989b}.quick-nav button:hover,.quick-nav button.active{border-color:var(--gold);background:#2b240e}.quick-nav button.active strong{color:#f1cd4a}
+.control-section{scroll-margin-top:82px}
+.control-section>summary{min-height:62px}
+.control-section>summary span:nth-child(2){min-width:0}
+.section-kicker{display:flex;align-items:center;gap:7px;margin:14px 2px 8px;color:#e7c653;font-size:10px;font-weight:900;letter-spacing:.11em;text-transform:uppercase}
+.section-kicker::after{content:'';height:1px;flex:1;background:#303638}
+.help-box{display:flex;gap:9px;align-items:flex-start;padding:10px 11px;margin:8px 0 10px;border:1px solid #2c3335;border-radius:10px;background:#0c0f10;color:#aeb5b6;font-size:10px;line-height:1.45}
+.help-box b{color:#f0cc47;white-space:nowrap}
+.field.compact-field{position:relative}
+.field-badge{position:absolute;right:10px;top:10px;border:1px solid #4d4a32;background:#1d1a0c;color:#e5c149;padding:4px 7px;border-radius:999px;font-size:8px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+.controls input[type=range]{height:20px}
+.controls select{width:100%;background:#090b0c;border:1px solid #42484a;color:#fff;padding:11px;border-radius:9px}
+.upload-label{display:flex!important;align-items:center;justify-content:center;min-height:44px}
+.sponsor-card .small,.compact-field .small{min-height:16px}
+.section-body>.field:first-child{margin-top:10px!important}
+@media(max-width:600px){.quick-nav{grid-template-columns:repeat(2,1fr);position:static}.quick-nav button{min-height:44px}.field-badge{position:static;display:inline-block;margin-bottom:8px}}
+
+
+.draft-note{display:grid;gap:5px;padding:12px 13px;margin:0 0 14px;border:1px solid #5f4b12;border-radius:11px;background:#19160a}
+.draft-note b{color:#f0c945;font-size:11px;letter-spacing:.08em}
+.draft-note span{color:#c8cbc6;font-size:11px;line-height:1.5}
+
+</style>
+<link rel="stylesheet" href="/fonts/fonts.css"><link rel="stylesheet" href="/fonts/extended.css"></head>
+<body>
+<header>
+ <div class="brand">
+  <img class="brand-logo" id="headerLogo" src="./assets/nutria-logo.png" alt="Nutria Sportswear">
+  <div class="brand-logo-fallback" id="headerFallback">N</div>
+  <div><strong>NUTRIA SPORTSWEAR</strong><span>YOUR KIT. YOUR IDENTITY.</span></div>
+ </div>
+ <div class="pill">STUDIO · CONFIGURATORE 3D</div>
+<nav class="top-nav">
+  <a class="active" href="/">CONFIGURATORE 3D</a>
+  <a href="/progetti">PROGETTI</a><a id="adminNav" href="/bozze" hidden style="display:none">BOZZE ↗</a>
+</nav>
+</header>
+
+<main>
+ <section class="intro">
+  <div class="eyebrow">CREA LA TUA BOZZA</div>
+  <h1>DAI FORMA AL TUO KIT.<br><span style="color:var(--gold)">NOI LO RENDIAMO REALE.</span></h1>
+  <p>Personalizza colori, stile, loghi e sponsor e crea una prima bozza del tuo kit. Dopo l’invio, Nutria Sportswear rifinirà il concept e ti sottoporrà il progetto grafico definitivo prima della produzione.</p>
+ </section>
+
+ <div class="layout">
+  <section class="viewer">
+   <div class="viewer-top"><span id="productTitle">ANTEPRIMA KIT 3D</span><span>DRAG / RUOTA</span></div>
+   <div id="stage">
+    <div id="loading" class="loading">CARICAMENTO KIT 3D…</div>
+    <div class="hint">Trascina per ruotare · rotella per zoom</div>
+   </div>
+   <div style="padding:14px 18px;border-top:1px solid var(--line)">
+    <button id="downloadPreview" style="width:100%">↓ SCARICA BOZZA PNG · 4 VISTE</button>
+   </div>
+  </section>
+
+  <section class="controls">
+   <div class="controls-head"><div class="controls-head-copy"><div class="eyebrow">PERSONALIZZA IL KIT</div><h2>Costruisci la tua idea</h2><p class="sub">Scegli colori, dettagli, nome, numero, stemma e sponsor.</p></div></div>
+
+   <nav class="quick-nav" aria-label="Navigazione configuratore">
+    <button type="button" data-jump="designSection" class="active"><strong>1 · Design</strong><span>Colori e stile</span></button>
+    <button type="button" data-jump="identitySection"><strong>2 · Nome / N°</strong><span>Personalizzazione</span></button>
+    <button type="button" data-jump="logosSection"><strong>3 · Loghi</strong><span>Stemma e sponsor</span></button>
+    <button type="button" data-jump="quoteSection"><strong>4 · Invia</strong><span>Condividi la bozza</span></button>
+   </nav>
+
+   <details class="control-section" id="designSection" open>
+    <summary><span class="step-dot">1</span><span><b>Design del kit</b><small>Vista, colori e stile</small></span></summary>
+    <div class="section-body">
+     <div class="field compact-field">
+      <span class="field-badge">Vista 3D</span>
+      <label>VISUALIZZA</label>
+      <div class="products">
+       <button class="active" data-view="Kit">Kit completo</button>
+       <button data-view="Maglia">Maglia</button>
+       <button data-view="Pantaloncini">Pantaloncini</button>
+      </div>
+     </div>
+
+     <div class="section-kicker">Maglia</div>
+     <div class="field compact-field">
+      <span class="field-badge">Maglia</span>
+      <label>COLORE PRINCIPALE</label>
+      <div class="colors">
+       <button class="swatch active" data-color="#202323" style="background:#202323" aria-label="Nero"></button>
+       <button class="swatch" data-color="#f0eee8" style="background:#f0eee8" aria-label="Bianco"></button>
+       <button class="swatch" data-color="#176c45" style="background:#176c45" aria-label="Verde"></button>
+       <button class="swatch" data-color="#e87522" style="background:#e87522" aria-label="Arancione"></button>
+       <button class="swatch" data-color="#8c76ad" style="background:#8c76ad" aria-label="Lilla"></button>
+       <button class="swatch" data-color="#c92032" style="background:#c92032" aria-label="Rosso"></button>
+       <button class="swatch" data-color="#174ea6" style="background:#174ea6" aria-label="Blu"></button>
+       <button class="swatch" data-color="#63b6e5" style="background:#63b6e5" aria-label="Azzurro"></button>
+       <button class="swatch" data-color="#f2d126" style="background:#f2d126" aria-label="Giallo"></button>
+       <button class="swatch" data-color="#7b1f2d" style="background:#7b1f2d" aria-label="Bordeaux"></button>
+       <button class="swatch" data-color="#73777b" style="background:#73777b" aria-label="Grigio"></button>
+       <button class="swatch" data-color="#f3a7c4" style="background:#f3a7c4" aria-label="Rosa"></button>
+       <button class="swatch" data-color="#00a9a5" style="background:#00a9a5" aria-label="Turchese"></button>
+       <button class="swatch" data-color="#d7a928" style="background:#d7a928" aria-label="Oro"></button>
+<button type="button" class="swatch" data-color="#000000" style="background:#000000" aria-label="Nero assoluto" title="Nero assoluto · #000000"></button>
+<button type="button" class="swatch" data-color="#383e42" style="background:#383e42" aria-label="Antracite" title="Antracite · #383E42"></button>
+<button type="button" class="swatch" data-color="#bfc4ca" style="background:#bfc4ca" aria-label="Argento" title="Argento · #BFC4CA"></button>
+<button type="button" class="swatch" data-color="#dce0e3" style="background:#dce0e3" aria-label="Grigio perla" title="Grigio perla · #DCE0E3"></button>
+<button type="button" class="swatch" data-color="#fff4d6" style="background:#fff4d6" aria-label="Avorio" title="Avorio · #FFF4D6"></button>
+<button type="button" class="swatch" data-color="#ccb58b" style="background:#ccb58b" aria-label="Sabbia" title="Sabbia · #CCB58B"></button>
+<button type="button" class="swatch" data-color="#a87845" style="background:#a87845" aria-label="Cammello" title="Cammello · #A87845"></button>
+<button type="button" class="swatch" data-color="#593a2f" style="background:#593a2f" aria-label="Cioccolato" title="Cioccolato · #593A2F"></button>
+<button type="button" class="swatch" data-color="#103c2d" style="background:#103c2d" aria-label="Verde bosco" title="Verde bosco · #103C2D"></button>
+<button type="button" class="swatch" data-color="#07533c" style="background:#07533c" aria-label="Verde bottiglia" title="Verde bottiglia · #07533C"></button>
+<button type="button" class="swatch" data-color="#009b72" style="background:#009b72" aria-label="Verde smeraldo" title="Verde smeraldo · #009B72"></button>
+<button type="button" class="swatch" data-color="#92aa8b" style="background:#92aa8b" aria-label="Verde salvia" title="Verde salvia · #92AA8B"></button>
+<button type="button" class="swatch" data-color="#6e7534" style="background:#6e7534" aria-label="Verde oliva" title="Verde oliva · #6E7534"></button>
+<button type="button" class="swatch" data-color="#b8ed27" style="background:#b8ed27" aria-label="Verde lime" title="Verde lime · #B8ED27"></button>
+<button type="button" class="swatch" data-color="#55ff35" style="background:#55ff35" aria-label="Verde fluo" title="Verde fluo · #55FF35"></button>
+<button type="button" class="swatch" data-color="#101d3c" style="background:#101d3c" aria-label="Blu notte" title="Blu notte · #101D3C"></button>
+<button type="button" class="swatch" data-color="#152d58" style="background:#152d58" aria-label="Blu navy" title="Blu navy · #152D58"></button>
+<button type="button" class="swatch" data-color="#235dff" style="background:#235dff" aria-label="Blu elettrico" title="Blu elettrico · #235DFF"></button>
+<button type="button" class="swatch" data-color="#176779" style="background:#176779" aria-label="Blu petrolio" title="Blu petrolio · #176779"></button>
+<button type="button" class="swatch" data-color="#b2e7f2" style="background:#b2e7f2" aria-label="Celeste ghiaccio" title="Celeste ghiaccio · #B2E7F2"></button>
+<button type="button" class="swatch" data-color="#6738a0" style="background:#6738a0" aria-label="Viola" title="Viola · #6738A0"></button>
+<button type="button" class="swatch" data-color="#522443" style="background:#522443" aria-label="Prugna" title="Prugna · #522443"></button>
+<button type="button" class="swatch" data-color="#e6228e" style="background:#e6228e" aria-label="Fucsia" title="Fucsia · #E6228E"></button>
+<button type="button" class="swatch" data-color="#ff7467" style="background:#ff7467" aria-label="Corallo" title="Corallo · #FF7467"></button>
+<button type="button" class="swatch" data-color="#9e172c" style="background:#9e172c" aria-label="Rosso granata" title="Rosso granata · #9E172C"></button>
+<button type="button" class="swatch" data-color="#eaff00" style="background:#eaff00" aria-label="Giallo fluo" title="Giallo fluo · #EAFF00"></button>
+      </div>
+      <div class="two-col control-row"><div><label for="customBaseColor">COLORE LIBERO</label><input id="customBaseColor" type="color" value="#202323"></div><div><label for="baseColorHex">CODICE HEX</label><input id="baseColorHex" type="text" value="#202323" maxlength="7" pattern="#[0-9a-fA-F]{6}" aria-describedby="colorHelp"></div></div><div class="small" id="colorHelp">40 colori pronti oppure scegli una tonalità personalizzata. I colori fluo sono indicativi a schermo.</div>
+     </div>
+
+     <div class="field compact-field">
+      <label>STILE MAGLIA</label>
+      <div class="products pattern-grid" style="grid-template-columns:repeat(2,1fr)">
+       <button class="active" data-pattern="solid">Tinta unita</button><button data-pattern="vertical">Righe verticali</button>
+       <button data-pattern="horizontal">Righe orizzontali</button><button data-pattern="diagonal">Righe diagonali</button>
+       <button data-pattern="chevron">Chevron</button><button data-pattern="halves">Bicolore</button>
+       <button data-pattern="thinVertical">Gessato</button><button data-pattern="wideVertical">Bande verticali</button>
+       <button data-pattern="cross">Griglia</button><button data-pattern="diamonds">Rombi</button>
+       <button data-pattern="waves">Onde</button><button data-pattern="zigzag">Zig Zag</button>
+       <button data-pattern="sash">Fascia diagonale</button><button data-pattern="centerStripe">Banda centrale</button>
+       <button data-pattern="hoops">Fasce larghe</button><button data-pattern="quarters">Quarti</button>
+       <button data-pattern="splitDiagonal">Taglio diagonale</button><button data-pattern="vchest">V sul petto</button>
+       <button data-pattern="chestBand">Banda petto</button><button data-pattern="leftPanel">Pannello laterale</button>
+       <button data-pattern="checkers">Scacchi</button><button data-pattern="gradientVertical">Sfumato verticale</button>
+       <button data-pattern="gradientDiagonal">Sfumato diagonale</button><button data-pattern="topFade">Fade spalle</button>
+       <button data-pattern="doubleSash">Doppia fascia</button><button data-pattern="tripleStripe">Tripla banda</button>
+       <button data-pattern="dots">Pois sportivi</button><button data-pattern="herringbone">Spina di pesce</button>
+<button type="button" data-pattern="camo">Camouflage</button><button type="button" data-pattern="digitalCamo">Camo digitale</button><button type="button" data-pattern="lightning">Fulmini</button><button type="button" data-pattern="topography">Topografica</button><button type="button" data-pattern="hexagons">Esagoni</button><button type="button" data-pattern="brush">Pennellate</button><button type="button" data-pattern="sunburst">Raggi</button><button type="button" data-pattern="tiger">Graffi</button><button type="button" data-pattern="confetti">Memphis</button><button type="button" data-pattern="microCross">Micro croci</button><button type="button" data-pattern="pixelFade">Pixel sfumati</button><button type="button" data-pattern="contourWaves">Onde fluide</button>
+      </div>
+      <div class="two-col control-row">
+       <div><label>COLORE TRAMA</label><input id="patternColor" type="color" value="#d7a928"></div>
+       <div><label>SPESSORE</label><input id="patternSize" type="range" min="8" max="80" value="32"></div>
+      </div>
+     </div>
+
+<div class="field compact-field"><label for="shortsStyle">STILE PANTALONCINI</label><select id="shortsStyle" style="width:100%;background:#101314;color:#eee;padding:12px;border:1px solid #383d3e;border-radius:9px"><option value="auto">Coordinato alla maglia</option><option value="plain">Tinta unita</option><option value="sideSingle">Banda laterale</option><option value="sideDouble">Doppia banda laterale</option><option value="sideTriple">Tripla banda laterale</option><option value="hemDouble">Doppio bordo sull’orlo</option><option value="panels">Inserti laterali</option><option value="slashes">Tagli diagonali</option><option value="chevrons">Chevron laterali</option><option value="checkPanels">Scacchi laterali</option><option value="dottedTape">Banda a pois</option><option value="fadePanels">Inserti sfumati</option></select><div class="small">Scegli una fantasia indipendente o mantieni il coordinamento automatico.</div></div>     <div class="section-kicker">Colori del kit</div>
+     <div class="field compact-field">
+      <span class="field-badge">Kit</span>
+      <label>COLORI DETTAGLI</label>
+      <div class="two-col color-controls">
+       <div><small>COLLETTO</small><input id="collarColor" type="color" value="#202323"></div>
+       <div><small>MANICHE</small><input id="sleeveColor" type="color" value="#202323"></div>
+       <div><small>PANTALONCINI</small><input id="shortsColor" type="color" value="#202323"></div>
+       <div><small>CALZETTONI</small><input id="socksColor" type="color" value="#202323"></div>
+      </div>
+     </div>
+    </div>
+   </details>
+
+   <details class="control-section" id="identitySection">
+    <summary><span class="step-dot">2</span><span><b>Nome e numero</b><small>Personalizza il retro</small></span></summary>
+    <div class="section-body">
+     <div class="field compact-field">
+      <span class="field-badge">Retro maglia</span>
+      <div class="name-number-row"><input id="playerName" type="text" maxlength="18" value="ROSSI" placeholder="NOME"><input id="playerNumber" type="text" maxlength="2" value="10" placeholder="10"></div>
+      <div class="two-col control-row">
+       <select id="kitFont">
+        <optgroup label="SPORT / MODERNI"><option value="Anton" selected>Anton</option><option value="Bebas Neue">Bebas Neue</option><option value="Oswald">Oswald</option><option value="Barlow Condensed">Barlow Condensed</option><option value="Teko">Teko</option><option value="Russo One">Russo One</option><option value="Archivo Black">Archivo Black</option><option value="Roboto Condensed">Roboto Condensed</option></optgroup>
+        <optgroup label="DISPLAY / SPECIALI"><option value="Black Ops One">Black Ops One</option><option value="Graduate">Graduate</option><option value="Audiowide">Audiowide</option><option value="Permanent Marker">Permanent Marker</option></optgroup>
+        <optgroup label="TECH / FUTURISTICI"><option value="Saira Condensed">Saira Condensed</option><option value="Rajdhani">Rajdhani</option><option value="Chakra Petch">Chakra Petch</option><option value="Exo 2">Exo 2</option><option value="Orbitron">Orbitron</option><option value="Oxanium">Oxanium</option></optgroup><optgroup label="SPORT / RACING"><option value="Racing Sans One">Racing Sans One</option><option value="Fugaz One">Fugaz One</option><option value="Kanit">Kanit</option></optgroup><optgroup label="COLLEGE / RETRO"><option value="Alfa Slab One">Alfa Slab One</option><option value="Bungee">Bungee</option><option value="Staatliches">Staatliches</option><option value="Squada One">Squada One</option><option value="Monoton">Monoton</option><option value="Rubik Mono One">Rubik Mono One</option></optgroup><optgroup label="CLASSICI"><option value="Arial Black">Arial Black</option><option value="Impact">Impact</option><option value="Trebuchet MS">Trebuchet</option><option value="Georgia">Georgia</option><option value="Courier New">Courier New</option></optgroup>
+       </select>
+       <input id="textColor" type="color" value="#ffffff">
+      </div>
+      <div id="fontPreview" aria-label="Anteprima carattere" style="font-family:Anton,sans-serif;font-size:30px;text-align:center;padding:18px 8px;background:#0b0d0e;border:1px solid #373c3d;border-radius:9px;margin-top:12px;overflow-wrap:anywhere">NUTRIA 10</div>
+      <details class="advanced-controls">
+       <summary>Regolazioni avanzate retro</summary>
+       <div class="two-col slider-grid">
+        <div><small>DIMENSIONE NOME <span id="backNameSizeValue">125%</span></small><input id="backNameSize" type="range" min="70" max="180" value="125" step="5"></div>
+        <div><small>ALTEZZA NOME</small><input id="backNameY" type="range" min="-100" max="100" value="0" step="2"></div>
+        <div><small>DIMENSIONE NUMERO <span id="backNumberSizeValue">140%</span></small><input id="backNumberSize" type="range" min="70" max="190" value="140" step="5"></div>
+        <div><small>ALTEZZA NUMERO</small><input id="backNumberY" type="range" min="-100" max="100" value="0" step="2"></div>
+       </div>
+      </details>
+     </div>
+    </div>
+   </details>
+
+   <details class="control-section" id="logosSection">
+    <summary><span class="step-dot">3</span><span><b>Loghi e sponsor</b><small>Carica i tuoi file</small></span></summary>
+    <div class="section-body">
+
+     <div class="field compact-field">
+      <label>STEMMA SQUADRA · MAGLIA + PANTALONCINI</label>
+      <label class="upload-label" for="logoFile">＋ Carica stemma squadra</label>
+      <input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp">
+      <div class="small" id="fileStatus">PNG trasparente consigliato.</div>
+      <details class="advanced-controls"><summary>Regola stemma squadra</summary><div class="two-col slider-grid">
+       <div><small>DIMENSIONE <span id="teamLogoSizeValue">100%</span></small><input id="teamLogoSize" type="range" min="40" max="300" value="100" step="5"></div>
+       <div><small>ORIZZONTALE</small><input id="teamLogoX" type="range" min="-100" max="100" value="0" step="2"></div>
+       <div><small>VERTICALE</small><input id="teamLogoY" type="range" min="-100" max="100" value="0" step="2"></div>
+      </div></details>
+     </div>
+
+     <div class="field compact-field sponsor-card">
+      <label>SPONSOR FRONTE · PANCIA</label>
+      <label class="upload-label" for="frontSponsorFile">＋ Carica sponsor fronte</label><input id="frontSponsorFile" type="file" accept="image/png,image/jpeg,image/webp"><div class="small" id="frontSponsorStatus">PNG trasparente consigliato.</div>
+      <div class="two-col slider-grid"><div><small>DIMENSIONE <span id="frontSponsorSizeValue">100%</span></small><input id="frontSponsorSize" type="range" min="40" max="220" value="100"></div><div><small>ALTEZZA</small><input id="frontSponsorY" type="range" min="-100" max="100" value="0"></div></div>
+     </div>
+
+     <div class="field compact-field sponsor-card">
+      <label>SPONSOR RETRO · SOTTO IL NUMERO</label>
+      <label class="upload-label" for="backSponsorFile">＋ Carica sponsor retro</label><input id="backSponsorFile" type="file" accept="image/png,image/jpeg,image/webp"><div class="small" id="backSponsorStatus">PNG trasparente consigliato.</div>
+      <div class="two-col slider-grid"><div><small>DIMENSIONE <span id="backSponsorSizeValue">100%</span></small><input id="backSponsorSize" type="range" min="40" max="220" value="100"></div><div><small>ALTEZZA</small><input id="backSponsorY" type="range" min="-100" max="100" value="0"></div></div>
+     </div>
+    </div>
+   </details>
+
+   <details class="control-section" id="quoteSection">
+    <summary><span class="step-dot">4</span><span><b>Invia la tua bozza</b><small>La useremo come base per il progetto definitivo</small></span></summary>
+    <div class="section-body">
+     <div class="draft-note"><b>ANTEPRIMA PRELIMINARE</b><span>Questa configurazione rappresenta una bozza iniziale e non il file grafico definitivo. Una volta ricevuta, Nutria Sportswear rifinirà il design e ti invierà la proposta finale da approvare prima della produzione.</span></div>
+     <form id="quoteForm" action="/api/bozze" method="POST" enctype="multipart/form-data">
+      <div class="two-col"><input required id="name" type="text" placeholder="Nome referente"><input required id="team" type="text" placeholder="Squadra / società"></div>
+      <div class="two-col"><input required id="email" type="email" placeholder="Email"><input id="qty" type="number" min="1" value="10" placeholder="Quantità"></div>
+      <textarea id="notes" placeholder="Note, esigenze, quantità, scadenze..."></textarea>
+      <!-- Campi collegati al form Live del pannello FormSubmit.io -->
+      <input type="hidden" id="fsName" name="Short text">
+      <input type="hidden" id="fsEmail" name="Email">
+      <textarea id="fsMessage" name="Long text" hidden></textarea>
+      <input type="file" id="fsAttachment" name="Bozza PNG" accept="image/png" style="display:none">
+      <input type="text" name="_formsubmit_id" tabindex="-1" autocomplete="off" style="display:none" aria-hidden="true">
+      <button class="primary" type="submit">INVIA LA BOZZA A NUTRIA</button>
+     </form>
+    </div>
+   </details>
+  </section>
+ </div>
+</main>
+
+<footer>© Nutria Sportswear · L’anteprima generata dal configuratore è una bozza preliminare e non costituisce approvazione grafica né ordine di produzione.</footer>
+
+
+<script type="module" src="/studio.bundle.js"></script>
+
+
+
+</body>
+</html>

@@ -1,0 +1,1 @@
+import {AsyncLocalStorage} from 'node:async_hooks';export const requestContext=new AsyncLocalStorage<{admin:boolean}>();export async function isAuthenticated(){return requestContext.getStore()?.admin===true;}

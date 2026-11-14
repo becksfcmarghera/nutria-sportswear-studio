@@ -1,0 +1,2 @@
+import {env} from 'cloudflare:workers';import {isAdmin} from '../../../admin';
+export async function GET(req:Request,{params}:{params:Promise<{key:string[]}>}){const key=(await params).key.join('/');if(!key.startsWith('projects/')&&!await isAdmin())return new Response('Accesso riservato',{status:403});const obj=await env.BUCKET.get(key);if(!obj)return new Response('File non trovato',{status:404});return new Response(obj.body,{headers:{'Content-Type':obj.httpMetadata?.contentType||'image/png','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}})}

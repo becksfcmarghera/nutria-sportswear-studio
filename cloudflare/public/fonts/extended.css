@@ -1,0 +1,105 @@
+@font-face {
+  font-family: 'Alfa Slab One';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/fonts/extended-0.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Bungee';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/fonts/extended-1.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Chakra Petch';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/fonts/extended-2.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Exo 2';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url(/fonts/extended-3.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Fugaz One';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/fonts/extended-4.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Kanit';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url(/fonts/extended-5.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Monoton';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/fonts/extended-6.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Orbitron';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url(/fonts/extended-7.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Oxanium';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(/fonts/extended-8.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Racing Sans One';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/fonts/extended-9.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Rajdhani';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/fonts/extended-10.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Rubik Mono One';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/fonts/extended-11.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Saira Condensed';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url(/fonts/extended-12.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Squada One';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/fonts/extended-13.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'Staatliches';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/fonts/extended-14.ttf) format('truetype');
+}
