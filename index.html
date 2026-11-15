@@ -143,6 +143,69 @@ font-size:11px;font-weight:700;letter-spacing:.7px;white-space:nowrap}
 .draft-note b{color:#f0c945;font-size:11px;letter-spacing:.08em}
 .draft-note span{color:#c8cbc6;font-size:11px;line-height:1.5}
 
+
+/* NUTRIA MOBILE V6.41 — responsive, touch, safe areas */
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{overflow-x:hidden}
+button,input,select,textarea{font-family:inherit}
+button,.upload-label{touch-action:manipulation}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+#stage{min-width:0;overflow:hidden;touch-action:none}
+#stage canvas{touch-action:none}
+.layout>*{min-width:0}
+.controls{min-width:0}
+@media(hover:none){button:hover,.upload-label:hover{border-color:#373c3d}button.active:hover{border-color:var(--gold)}}
+@media(max-width:900px){
+ main{padding:22px 14px 42px}
+ .layout{grid-template-columns:minmax(0,1fr);gap:14px}
+ #stage{height:clamp(340px,60svh,570px)}
+ .viewer-top{padding:12px 14px}
+ .controls{padding:16px}
+ .intro h1{font-size:clamp(29px,6vw,46px)}
+}
+@media(max-width:600px){
+ header{padding:12px 14px;flex-wrap:wrap;align-items:center;gap:8px}
+ .brand{gap:8px;min-width:0}
+ .brand-logo{width:56px;height:44px}
+ .brand strong{font-size:12px;letter-spacing:1px}
+ .brand span{font-size:8px;letter-spacing:2px}
+ .top-nav{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ .top-nav a{font-size:11px;padding:11px 8px;min-height:44px}
+ main{padding:18px 10px 36px}
+ .intro{margin-bottom:16px}
+ .intro h1{font-size:clamp(27px,8vw,38px);line-height:1.08}
+ .intro p{font-size:13px}
+ .viewer,.controls{border-radius:13px}
+ #stage{height:clamp(300px,51svh,480px)}
+ .hint{font-size:10px;left:9px;bottom:9px;padding:7px 9px}
+ .controls{padding:12px}
+ .quick-nav{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:5px;position:sticky;top:0;z-index:20}
+ .quick-nav button{padding:8px 3px;min-height:50px;min-width:0}
+ .quick-nav button strong{font-size:10px}
+ .quick-nav button span{font-size:8px}
+ .control-section{scroll-margin-top:78px}
+ .section-body{padding:4px 8px 12px}
+ .field{padding:11px!important}
+ .products{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+ .products button{min-height:44px;padding:10px 5px}
+ .pattern-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .two-col,.name-number-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .slider-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .colors{gap:12px}
+ .swatch{width:38px;height:38px}
+ .field input[type=text],.field input[type=email],.field input[type=number],.field select,.field textarea,
+ #quoteForm input,#quoteForm textarea{min-width:0;font-size:16px}
+ .primary,.upload-label{min-height:48px}
+ .notice,.draft-note{font-size:12px}
+}
+@media(max-width:380px){
+ .quick-nav button strong{font-size:9px}
+ .quick-nav button span{display:none}
+ .products button{font-size:10px}
+ .slider-grid{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
 </style>
 </head>
 <body>
@@ -360,8 +423,8 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(35, stage.clientWidth/stage.clientHeight, 0.01, 100);
 camera.position.set(0,0,6);
 
-const renderer = new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+const renderer = new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,window.matchMedia('(max-width: 600px)').matches?1.5:2));
 renderer.setSize(stage.clientWidth,stage.clientHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 stage.appendChild(renderer.domElement);
@@ -371,6 +434,10 @@ controls.enableDamping = true;
 controls.dampingFactor = .06;
 controls.minDistance = 2;
 controls.maxDistance = 12;
+controls.enablePan = false;
+controls.rotateSpeed = .75;
+controls.zoomSpeed = .85;
+controls.touches = {ONE:THREE.TOUCH.ROTATE,TWO:THREE.TOUCH.DOLLY_ROTATE};
 
 scene.add(new THREE.HemisphereLight(0xffffff,0x333333,2.2));
 const key = new THREE.DirectionalLight(0xffffff,3); key.position.set(3,4,5); scene.add(key);
@@ -1912,12 +1979,14 @@ document.getElementById('downloadPreview').addEventListener('click',async()=>{
 });
 
 function resize(){
-  const w=stage.clientWidth,h=stage.clientHeight;
+  const w=Math.max(1,stage.clientWidth),h=Math.max(1,stage.clientHeight);
   camera.aspect=w/h;
   camera.updateProjectionMatrix();
   renderer.setSize(w,h);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,window.matchMedia('(max-width: 600px)').matches?1.5:2));
 }
 window.addEventListener('resize',resize);
+if(window.ResizeObserver){new ResizeObserver(resize).observe(stage);}
 
 
 const nutriaLogoSizeInput=document.getElementById('nutriaLogoSize');
@@ -1967,6 +2036,30 @@ document.getElementById('backNumberSize')?.addEventListener('input',e=>{
 });
 document.getElementById('backNumberY')?.addEventListener('input',e=>{backNumberY=Number(e.target.value);updateBackPrint();});
 
+
+/* Sponsor removal lives inside the ES module, where textures are in scope. */
+function installSponsorRemoveButton(statusId,front){
+ const statusEl=document.getElementById(statusId);
+ if(!statusEl || statusEl.parentElement.querySelector('.remove-sponsor-'+(front?'front':'back'))) return;
+ const b=document.createElement('button');
+ b.type='button';b.className='remove-sponsor-'+(front?'front':'back');
+ b.textContent='Rimuovi sponsor';b.style.marginTop='8px';b.style.width='100%';
+ b.addEventListener('click',()=>{
+   if(front){
+     frontSponsorTexture?.dispose?.();frontSponsorTexture=null;
+     document.getElementById('frontSponsorFile').value='';
+   }else{
+     backSponsorTexture?.dispose?.();backSponsorTexture=null;
+     document.getElementById('backSponsorFile').value='';
+   }
+   rebuildSponsors();
+   statusEl.textContent='PNG trasparente consigliato.';
+ });
+ statusEl.parentElement.appendChild(b);
+}
+installSponsorRemoveButton('frontSponsorStatus',true);
+installSponsorRemoveButton('backSponsorStatus',false);
+
 function animate(){
   requestAnimationFrame(animate);
   controls.update();
@@ -1976,35 +2069,6 @@ animate();
 </script>
 
 <script>
-window.addEventListener('DOMContentLoaded',()=>{
-  const fs=document.getElementById('frontSponsorStatus');
-  const bs=document.getElementById('backSponsorStatus');
-
-  function addRemove(statusEl,front){
-    if(!statusEl || statusEl.parentElement.querySelector('.remove-sponsor-'+(front?'front':'back'))) return;
-    const b=document.createElement('button');
-    b.type='button';
-    b.className='remove-sponsor-'+(front?'front':'back');
-    b.textContent='Rimuovi sponsor';
-    b.style.marginTop='8px';
-    b.style.width='100%';
-    b.addEventListener('click',()=>{
-      if(front){
-        frontSponsorTexture?.dispose?.(); frontSponsorTexture=null;
-      }else{
-        backSponsorTexture?.dispose?.(); backSponsorTexture=null;
-      }
-      rebuildSponsors();
-      statusEl.textContent=front?'PNG trasparente consigliato.':'Applicato sotto il numero.';
-    });
-    statusEl.parentElement.appendChild(b);
-  }
-
-  addRemove(fs,true);
-  addRemove(bs,false);
-});
-
-
 // V6.40 - navigazione rapida UI (solo presentazione)
 document.querySelectorAll('.quick-nav [data-jump]').forEach(btn=>{
   btn.addEventListener('click',()=>{
