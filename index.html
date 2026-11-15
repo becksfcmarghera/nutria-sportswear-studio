@@ -206,6 +206,16 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 
+
+/* V6.43 visual enhancements */
+.nutria-pattern-previews button{display:flex;align-items:center;gap:9px;text-align:left;min-height:55px;padding:7px 9px}
+.nutria-pattern-previews button::before{content:"";display:block;flex:0 0 38px;height:38px;border:1px solid #5e6566;border-radius:7px;background:var(--pattern-preview,#252b2b);background-size:cover}
+.nutria-project-thumbs{display:flex;gap:8px;overflow-x:auto;padding:9px 0}
+.nutria-project-thumbs button{flex:0 0 92px;display:flex;flex-direction:column;align-items:center;gap:4px;overflow:hidden;min-height:100px;padding:5px;font-size:10px}
+.nutria-project-thumbs img{width:80px;height:70px;object-fit:contain;background:#101313;border-radius:5px}
+.nutria-view-buttons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:8px 0}
+.nutria-view-buttons button{min-height:44px;padding:8px 4px;font-size:11px}
+@media(max-width:600px){.nutria-pattern-previews button{font-size:11px}.nutria-view-buttons button{font-size:10px}}
 </style>
 </head>
 <body>
@@ -287,8 +297,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
      </div>
 
      <div class="field compact-field">
-      <label>STILE MAGLIA</label>
-      <div class="products pattern-grid" style="grid-template-columns:repeat(2,1fr)">
+      <label>STILE MAGLIA · ANTEPRIME</label>
+      <div class="products pattern-grid nutria-pattern-previews" style="grid-template-columns:repeat(2,1fr)">
        <button class="active" data-pattern="solid">Tinta unita</button><button data-pattern="vertical">Righe verticali</button>
        <button data-pattern="horizontal">Righe orizzontali</button><button data-pattern="diagonal">Righe diagonali</button>
        <button data-pattern="chevron">Chevron</button><button data-pattern="halves">Bicolore</button>
@@ -316,7 +326,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
  <div class="products" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:9px">
  <button type="button" id="saveProjectBtn">Salva</button><button type="button" id="loadProjectBtn">Carica</button><button type="button" id="deleteProjectBtn">Elimina</button>
  </div>
- <small id="projectSaveStatus" style="display:block;margin-top:9px;color:#b9bfc0">Salvataggio su questo dispositivo. Loghi e sponsor caricati come file vanno reinseriti.</small>
+ <div id="savedProjectThumbs" class="nutria-project-thumbs" aria-label="Miniature progetti"></div><small id="projectSaveStatus" style="display:block;margin-top:9px;color:#b9bfc0">Salvataggio su questo dispositivo. Loghi e sponsor caricati come file vanno reinseriti.</small>
  </div>
  <div class="field compact-field"><label>EFFETTO TESSUTO</label>
  <select id="fabricTexture"><option value="none">Liscio</option><option value="micro">Microtrama tecnica</option><option value="mesh">Microrete traspirante</option><option value="rib">Costine verticali</option><option value="carbon">Trama diagonale</option></select>
@@ -1778,7 +1788,7 @@ function projectSnapshot(){
 document.getElementById('saveProjectBtn').addEventListener('click',()=>{
  const title=document.getElementById('projectTitleInput').value.trim();
  if(!title){saveStatus('Inserisci prima un nome per il progetto.');return}
- try{const all=readProjects();all[title]=projectSnapshot();localStorage.setItem(projectStorageKey,JSON.stringify(all));refreshProjects();document.getElementById('savedProjectList').value=title;saveStatus('Progetto salvato su questo dispositivo. I file PNG dei loghi non sono inclusi.')}catch(e){saveStatus('Salvataggio non disponibile: controlla lo spazio del browser.')}
+ try{const all=readProjects();all[title]={...projectSnapshot(),thumbnail:projectThumbnail()};localStorage.setItem(projectStorageKey,JSON.stringify(all));refreshProjects();document.getElementById('savedProjectList').value=title;renderProjectThumbnails();saveProjectAssets(title).then(()=>saveStatus('Progetto e file grafici salvati su questo dispositivo.')).catch(()=>saveStatus('Progetto salvato, ma non è stato possibile memorizzare i file grafici.'))}catch(e){saveStatus('Salvataggio non disponibile: controlla lo spazio del browser.')}
 });
 document.getElementById('loadProjectBtn').addEventListener('click',()=>{
  const key=document.getElementById('savedProjectList').value,p=readProjects()[key];
@@ -1794,18 +1804,71 @@ document.getElementById('loadProjectBtn').addEventListener('click',()=>{
  document.querySelectorAll('[data-color]').forEach(b=>b.classList.toggle('active',b.dataset.color.toLowerCase()===chosenColor.toLowerCase()));
  applyKitColor();updateBackPrint();rebuildShortsNumber();
  document.getElementById('projectTitleInput').value=key;
- saveStatus('Progetto caricato. Ricarica manualmente gli eventuali loghi e sponsor.');
+ restoreProjectAssets(key).then(()=>saveStatus('Progetto caricato con i file grafici disponibili.')).catch(()=>saveStatus('Progetto caricato; reinserisci eventuali loghi e sponsor.'));
 });
 document.getElementById('deleteProjectBtn').addEventListener('click',()=>{
  const key=document.getElementById('savedProjectList').value;if(!key){saveStatus('Seleziona il progetto da eliminare.');return}
  if(!confirm('Eliminare il progetto '+key+' da questo dispositivo?'))return;
- const all=readProjects();delete all[key];localStorage.setItem(projectStorageKey,JSON.stringify(all));refreshProjects();saveStatus('Progetto eliminato.');
+ const all=readProjects();delete all[key];localStorage.setItem(projectStorageKey,JSON.stringify(all));refreshProjects();renderProjectThumbnails();deleteProjectAssets(key).catch(()=>{});saveStatus('Progetto eliminato.');
 });
 ['fabricTexture','fabricStrength','fabricScale'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{
  fabricType=document.getElementById('fabricTexture').value;fabricStrength=Number(document.getElementById('fabricStrength').value);fabricScale=Number(document.getElementById('fabricScale').value);applyKitColor();
 }));
 refreshProjects();
 
+
+/* V6.43: pattern swatches generated from existing pattern IDs. */
+function paintPatternPreviews(){
+ document.querySelectorAll('.nutria-pattern-previews [data-pattern]').forEach((btn,i)=>{
+  const c=document.createElement('canvas');c.width=c.height=60;const ctx=c.getContext('2d');
+  ctx.fillStyle='#243334';ctx.fillRect(0,0,60,60);ctx.strokeStyle='#d7a928';ctx.fillStyle='#d7a928';ctx.lineWidth=5;
+  const kind=btn.dataset.pattern;
+  if(kind==='solid')return;
+  if(/vertical|stripe|gess|panel/i.test(kind)){for(let x=7;x<60;x+=18)ctx.fillRect(x,0,5,60)}
+  else if(/horizontal|hoops|chestBand/i.test(kind)){for(let y=8;y<60;y+=18)ctx.fillRect(0,y,60,5)}
+  else if(/dots/i.test(kind)){for(let y=8;y<60;y+=14)for(let x=8;x<60;x+=14){ctx.beginPath();ctx.arc(x,y,2,0,7);ctx.fill()}}
+  else if(/check|cross|diamonds/i.test(kind)){for(let j=0;j<60;j+=15){ctx.fillRect(j,0,2,60);ctx.fillRect(0,j,60,2)}}
+  else if(/halves|quarters/i.test(kind)){ctx.fillRect(30,0,30,60)}
+  else{for(let x=-60;x<90;x+=18){ctx.beginPath();ctx.moveTo(x,60);ctx.lineTo(x+60,0);ctx.stroke()}}
+  btn.style.setProperty('--pattern-preview','url("'+c.toDataURL('image/png')+'")');
+ });
+}
+paintPatternPreviews();
+const viewBar=document.createElement('div');viewBar.className='nutria-view-buttons';
+[['Fronte',0,0,6.8],['Retro',0,0,-6.8],['Destra',6.8,0,0],['Sinistra',-6.8,0,0]].forEach(([label,x,y,z])=>{
+ const b=document.createElement('button');b.type='button';b.textContent=label;
+ b.addEventListener('click',()=>{camera.position.set(x,y,z);camera.lookAt(controls.target);controls.update();});
+ viewBar.appendChild(b);
+});
+document.getElementById('stage')?.parentElement?.appendChild(viewBar);
+
+/* IndexedDB stores customer-uploaded graphics separately from small project settings. */
+function openNutriaDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open('nutria-project-assets',1);req.onupgradeneeded=()=>req.result.createObjectStore('files');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
+async function saveProjectAssets(name){
+ const db=await openNutriaDB();const files={};
+ for(const id of ['logoFile','frontSponsorFile','backSponsorFile']){const file=document.getElementById(id)?.files?.[0];if(file)files[id]=file}
+ await new Promise((resolve,reject)=>{const tx=db.transaction('files','readwrite');tx.objectStore('files').put(files,name);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});
+ db.close();
+}
+async function restoreProjectAssets(name){
+ const db=await openNutriaDB();
+ const files=await new Promise((resolve,reject)=>{const tx=db.transaction('files','readonly');const req=tx.objectStore('files').get(name);req.onsuccess=()=>resolve(req.result||{});req.onerror=()=>reject(req.error)});
+ db.close();
+ for(const [id,file] of Object.entries(files)){if(!(file instanceof Blob))continue;const el=document.getElementById(id);if(!el)continue;const dt=new DataTransfer();dt.items.add(new File([file],file.name||id+'.png',{type:file.type||'image/png'}));el.files=dt.files;el.dispatchEvent(new Event('change',{bubbles:true}))}
+}
+async function deleteProjectAssets(name){const db=await openNutriaDB();await new Promise((resolve,reject)=>{const tx=db.transaction('files','readwrite');tx.objectStore('files').delete(name);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});db.close()}
+function projectThumbnail(){
+ try{const c=document.createElement('canvas');c.width=160;c.height=140;const x=c.getContext('2d');x.fillStyle='#131718';x.fillRect(0,0,160,140);x.drawImage(renderer.domElement,0,0,160,140);return c.toDataURL('image/jpeg',.55)}catch{return null}
+}
+function renderProjectThumbnails(){
+ const el=document.getElementById('savedProjectThumbs');if(!el)return;el.replaceChildren();
+ Object.entries(readProjects()).forEach(([name,p])=>{const b=document.createElement('button');b.type='button';b.title=name;
+ const im=document.createElement('img');im.alt='Anteprima '+name;if(p.thumbnail)im.src=p.thumbnail;
+ const t=document.createElement('span');t.textContent=name;b.append(im,t);
+ b.addEventListener('click',()=>{document.getElementById('savedProjectList').value=name;document.getElementById('loadProjectBtn').click()});el.appendChild(b)});
+}
+
+renderProjectThumbnails();
 document.querySelectorAll('[data-pattern]').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('[data-pattern]').forEach(x=>x.classList.remove('active'));
   b.classList.add('active'); currentPattern=b.dataset.pattern; applyKitColor();
