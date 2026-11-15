@@ -1,0 +1,42 @@
+{
+  "name": "nutria-creator",
+  "main": "cloudflare/dist/worker/index.js",
+  "compatibility_date": "2026-05-15",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "workers_dev": false,
+  "assets": {
+    "directory": "cloudflare/dist/public",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/api/*",
+      "/login",
+      "/logout",
+      "/bozze",
+      "/progetti",
+      "/studio",
+      "/studio.html"
+    ],
+    "html_handling": "none"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "nutria-sportswear",
+      "database_id": "bc652a02-922a-4179-9026-68acd7ea8332",
+      "migrations_dir": "cloudflare/migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "nutria-sportswear-files"
+    }
+  ],
+  "vars": {
+    "ADMIN_EMAIL": "becksfcmarghera@gmail.com",
+    "SITE_LABEL": "Nutria Creator",
+    "NOTIFICATION_FORM_URL": ""
+  }
+}
