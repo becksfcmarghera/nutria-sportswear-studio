@@ -1,6 +1,7 @@
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DecalGeometry } from 'three/addons/geometries/DecalGeometry.js';
 
@@ -1424,7 +1425,7 @@ document.getElementById('headerLogo').addEventListener('error',()=>{
 
 // Crea UN PNG con quattro viste fisse del kit (fronte, retro e due lati).
 // Un PNG non è interattivo, ma il cliente e Nutria vedono tutto il giro della divisa.
-// Si usa un render target off-screen: nessun cambiamento alla vista 3D dell'utente.
+// Cattura sincrona del framebuffer sRGB; ripristina dimensioni e vista prima del prossimo frame.
 function creaBozzaQuattroViste(){
   if(!realKit) throw new Error('Il modello 3D non è ancora caricato.');
 
@@ -1469,14 +1470,11 @@ function creaBozzaQuattroViste(){
 
   const savedView=currentView;
   const prevTarget=renderer.getRenderTarget();
-  const renderTarget=new THREE.WebGLRenderTarget(frameW,frameH,{depthBuffer:true,stencilBuffer:false});
-  const buffer=new Uint8Array(frameW*frameH*4);
-  const frame=document.createElement('canvas');
-  frame.width=frameW;
-  frame.height=frameH;
-  const frameCtx=frame.getContext('2d');
-  const cam=new THREE.PerspectiveCamera(35,frameW/frameH,.01,100);
-  // Framing costante: ruota soltanto la camera attorno al kit.
+  const previousSize=renderer.getSize(new THREE.Vector2());
+  const previousPixelRatio=renderer.getPixelRatio();
+  const previousViewport=renderer.getViewport(new THREE.Vector4());
+  const previousScissor=renderer.getScissor(new THREE.Vector4());
+  const previousScissorTest=renderer.getScissorTest();
   const distance=6.8;
 
   try{
@@ -1503,30 +1501,31 @@ function creaBozzaQuattroViste(){
       ctx.fillText((index+1)+'/4',px+panelW-23,py+34);
       ctx.textAlign='left';
 
-      cam.position.set(
-        view.dir[0]*distance,
-        view.dir[1]*distance,
-        view.dir[2]*distance
-      );
+      // A fresh camera and an explicit world matrix prevent a preceding view
+      // from leaking into this frame, including on mobile WebGL drivers.
+      const cam=new THREE.PerspectiveCamera(35,frameW/frameH,.01,100);
+      cam.position.fromArray(view.dir).multiplyScalar(distance);
       cam.lookAt(0,0,0);
       cam.updateProjectionMatrix();
-      renderer.setRenderTarget(renderTarget);
+      cam.updateMatrixWorld(true);
+      renderer.setRenderTarget(null);
+      renderer.setPixelRatio(1);
+      renderer.setSize(frameW,frameH,false);
+      renderer.setViewport(0,0,frameW,frameH);
+      renderer.setScissorTest(false);
       renderer.clear(true,true,true);
       renderer.render(scene,cam);
-      renderer.readRenderTargetPixels(renderTarget,0,0,frameW,frameH,buffer);
-
-      // I pixel WebGL hanno origine in basso: capovolge le righe per il canvas 2D.
-      const img=frameCtx.createImageData(frameW,frameH);
-      const stride=frameW*4;
-      for(let y=0;y<frameH;y++){
-        img.data.set(buffer.subarray(y*stride,(y+1)*stride),(frameH-1-y)*stride);
-      }
-      frameCtx.putImageData(img,0,0);
-      ctx.drawImage(frame,px+(panelW-frameW)/2,py+56);
+      // Capture the same sRGB framebuffer displayed by the configurator.
+      // No linear render-target bytes or manual pixel-row conversion.
+      ctx.drawImage(renderer.domElement,px+(panelW-frameW)/2,py+56,frameW,frameH);
     });
   }finally{
     renderer.setRenderTarget(prevTarget);
-    renderTarget.dispose();
+    renderer.setPixelRatio(previousPixelRatio);
+    renderer.setSize(previousSize.x,previousSize.y,false);
+    renderer.setViewport(previousViewport);
+    renderer.setScissor(previousScissor);
+    renderer.setScissorTest(previousScissorTest);
     currentView=savedView;
     updateView();
     controls.update();
@@ -1540,6 +1539,39 @@ function creaBozzaQuattroViste(){
 
   return board;
 }
+
+async function creaModelloGLB(){
+  if(!realKit)throw new Error('Il modello 3D non è ancora caricato.');
+  await document.fonts.ready;
+  const savedView=currentView;
+  const snapshot=new THREE.Group();
+  snapshot.name='Nutria Sportswear · Kit personalizzato';
+  try{
+    currentView='Kit';updateView();scene.updateMatrixWorld(true);
+    // Branding meshes are scene siblings, so export the entire visible kit,
+    // not just the original GLB subtree. Hidden legacy logos stay excluded.
+    for(const child of scene.children){
+      if(child.isLight||child.isCamera||!child.visible)continue;
+      snapshot.add(child.clone(true));
+    }
+  }finally{currentView=savedView;updateView();}
+  const result=await new GLTFExporter().parseAsync(snapshot,{binary:true,onlyVisible:true,maxTextureSize:2048});
+  if(!(result instanceof ArrayBuffer))throw new Error('Esportazione 3D non riuscita.');
+  const blob=new Blob([result],{type:'model/gltf-binary'});
+  if(blob.size>25000000)throw new Error('Il modello supera 25 MB. Riduci le immagini dei loghi.');
+  return blob;
+}
+function scaricaFile(blob,name){
+  const url=URL.createObjectURL(blob),link=document.createElement('a');
+  link.href=url;link.download=name;document.body.appendChild(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+document.getElementById('downloadModel').addEventListener('click',async e=>{
+  const button=e.currentTarget,previous=button.textContent;button.disabled=true;button.textContent='PREPARAZIONE 3D…';
+  try{scaricaFile(await creaModelloGLB(),'bozza-nutria-kit.glb');}
+  catch(error){alert('Esportazione 3D: '+error.message);}
+  finally{button.disabled=false;button.textContent=previous;}
+});
 
 function canvasToPngBlob(canvas){
   return new Promise((resolve,reject)=>{
@@ -1557,6 +1589,7 @@ document.getElementById('quoteForm').addEventListener('submit',async e=>{
 
   try{
     if(!realKit){ throw new Error('Kit 3D non ancora caricato.'); }
+    await document.fonts.ready;
     const pngCanvas=creaBozzaQuattroViste();
     const png=await canvasToPngBlob(pngCanvas);
     const team=(document.getElementById('team').value||'kit').trim();
@@ -1586,6 +1619,8 @@ document.getElementById('quoteForm').addEventListener('submit',async e=>{
 
     const data=new FormData();
     data.append('png',pngFile);
+    button.textContent='PREPARAZIONE MODELLO 3D…';
+    data.append('model',new File([await creaModelloGLB()],`bozza-nutria-${safeTeam}.glb`,{type:'model/gltf-binary'}));
     data.append('details',JSON.stringify({name:document.getElementById('name').value.trim(),team,email:document.getElementById('email').value.trim(),qty:document.getElementById('qty').value,notes:document.getElementById('notes').value,configuration:document.getElementById('fsMessage').value,controls:Object.fromEntries([...document.querySelectorAll('input,select')].filter(el=>el.id&&el.type!=='file').map(el=>[el.id,el.value]))}));
     for(const id of ['logoFile','frontSponsorFile','backSponsorFile']){ const f=document.getElementById(id).files[0]; if(f)data.append(id,f); }
     button.textContent='SALVATAGGIO…';
@@ -1597,7 +1632,7 @@ document.getElementById('quoteForm').addEventListener('submit',async e=>{
     button.disabled=false;
   }catch(error){
     console.error('Invio bozza:',error);
-    alert('Non riesco a preparare il PNG della bozza: '+error.message);
+    alert('Non riesco a preparare gli allegati della bozza: '+error.message);
     button.disabled=false;
     button.textContent=previous;
   }
@@ -1605,6 +1640,7 @@ document.getElementById('quoteForm').addEventListener('submit',async e=>{
 
 document.getElementById('downloadPreview').addEventListener('click',async()=>{
   try{
+    await document.fonts.ready;
     const pngCanvas=creaBozzaQuattroViste();
     const png=await canvasToPngBlob(pngCanvas);
     const url=URL.createObjectURL(png);

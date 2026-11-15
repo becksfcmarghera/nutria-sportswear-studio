@@ -8,7 +8,11 @@ export async function POST(req:Request){
  if(!details.name||!details.team||!/^\S+@\S+\.\S+$/.test(details.email)||!(png instanceof File)||png.type!=='image/png'||png.size>10000000)return Response.json({error:'Dati o PNG non validi'},{status:400});
  const signature=new Uint8Array(await png.slice(0,8).arrayBuffer());if(signature.join(',')!=='137,80,78,71,13,10,26,10')return Response.json({error:'PNG non valido'},{status:400});
  const id=crypto.randomUUID();const files:Record<string,string>={};
- try{for(const name of ['png','logoFile','frontSponsorFile','backSponsorFile']){const file=form.get(name);if(file instanceof File){if(file.size>10000000||!['image/png','image/jpeg','image/webp'].includes(file.type))throw new Error('Immagine non valida');const key=`drafts/${id}/${name}`;await env.BUCKET.put(key,await file.arrayBuffer(),{httpMetadata:{contentType:file.type}});files[name]=key}}
+ try{for(const name of ['png','model','logoFile','frontSponsorFile','backSponsorFile']){const file=form.get(name);if(file instanceof File){if(name==='model'){
+ if(file.size<20||file.size>25000000||file.type!=='model/gltf-binary')throw new Error('Modello non valido');
+ const header=new DataView(await file.slice(0,12).arrayBuffer());
+ if(header.getUint32(0,true)!==0x46546c67||header.getUint32(4,true)!==2||header.getUint32(8,true)!==file.size)throw new Error('GLB non valido');
+ }else if(file.size>10000000||!['image/png','image/jpeg','image/webp'].includes(file.type))throw new Error('Immagine non valida');const key=`drafts/${id}/${name}`;await env.BUCKET.put(key,await file.arrayBuffer(),{httpMetadata:{contentType:file.type}});files[name]=key}}
  await env.DB.prepare('INSERT INTO drafts (id,created,details,files,status,notes) VALUES (?,?,?,?,?,?)').bind(id,new Date().toISOString(),JSON.stringify(details),JSON.stringify(files),'Nuova','').run();
  }catch(e){await Promise.all(Object.values(files).map(k=>env.BUCKET.delete(k)));throw e}
  return Response.json({id},{status:201});
