@@ -310,7 +310,19 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
       </div>
      </div>
 
-     <div class="section-kicker">Colori del kit</div>
+     <div class="field compact-field" id="projectSavePanel">
+ <label>IL TUO PROGETTO</label>
+ <div class="two-col"><input id="projectTitleInput" type="text" maxlength="60" placeholder="Nome progetto (es. Prima divisa)"><select id="savedProjectList" aria-label="Progetti salvati"><option value="">Seleziona progetto salvato</option></select></div>
+ <div class="products" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:9px">
+ <button type="button" id="saveProjectBtn">Salva</button><button type="button" id="loadProjectBtn">Carica</button><button type="button" id="deleteProjectBtn">Elimina</button>
+ </div>
+ <small id="projectSaveStatus" style="display:block;margin-top:9px;color:#b9bfc0">Salvataggio su questo dispositivo. Loghi e sponsor caricati come file vanno reinseriti.</small>
+ </div>
+ <div class="field compact-field"><label>EFFETTO TESSUTO</label>
+ <select id="fabricTexture"><option value="none">Liscio</option><option value="micro">Microtrama tecnica</option><option value="mesh">Microrete traspirante</option><option value="rib">Costine verticali</option><option value="carbon">Trama diagonale</option></select>
+ <div class="two-col" style="margin-top:8px"><div><small>INTENSITÀ</small><input id="fabricStrength" type="range" min="0" max="40" value="12"></div><div><small>SCALA TRAMA</small><input id="fabricScale" type="range" min="4" max="28" value="12"></div></div>
+ </div>
+<div class="section-kicker">Colori del kit</div>
      <div class="field compact-field">
       <span class="field-badge">Kit</span>
       <label>COLORI DETTAGLI</label>
@@ -447,6 +459,7 @@ let realKit = null;
 let chosenColor = '#202323';
 let currentView = 'Kit';
 let currentPattern='solid', patternColor='#d7a928', patternSize=32;
+let fabricType='none',fabricStrength=12,fabricScale=12;
 let collarColor='#202323', sleeveColor='#202323', shortsColor='#202323', socksColor='#202323';
 let collarCustom=false, sleeveCustom=false, shortsCustom=false, socksCustom=false;
 let backPrint=null;
@@ -614,6 +627,25 @@ function makePatternTexture(){
     x.fillRect(512,0,512,1024);
   }
 
+  // Overlay in UV space: subtle textile texture without altering the underlying design.
+  if(fabricType!=='none' && fabricStrength>0){
+    x.save();
+    x.strokeStyle='rgba(255,255,255,'+(fabricStrength/500)+')';
+    x.fillStyle='rgba(0,0,0,'+(fabricStrength/650)+')';
+    x.lineWidth=1;
+    const step=Math.max(4,Number(fabricScale));
+    if(fabricType==='micro'){
+      for(let yy=0;yy<1024;yy+=step)for(let xx=0;xx<1024;xx+=step)x.fillRect(xx,yy,2,2);
+    }else if(fabricType==='mesh'){
+      for(let yy=0;yy<1024;yy+=step){x.beginPath();x.moveTo(0,yy);x.lineTo(1024,yy);x.stroke();}
+      for(let xx=0;xx<1024;xx+=step){x.beginPath();x.moveTo(xx,0);x.lineTo(xx,1024);x.stroke();}
+    }else if(fabricType==='rib'){
+      for(let xx=0;xx<1024;xx+=step){x.beginPath();x.moveTo(xx,0);x.lineTo(xx,1024);x.stroke();}
+    }else if(fabricType==='carbon'){
+      for(let yy=-1024;yy<2048;yy+=step*2){x.beginPath();x.moveTo(0,yy);x.lineTo(1024,yy+1024);x.stroke();}
+    }
+    x.restore();
+  }
   drawJerseyPrints(x);
 
   const t=new THREE.CanvasTexture(c);
@@ -1730,6 +1762,49 @@ document.querySelectorAll('[data-view]').forEach(btn=>{
     updateView();
   });
 });
+
+
+/* Projects are stored locally. Uploaded image files are deliberately not persisted. */
+const projectStorageKey='nutria-projects-v1';
+const projectFields=['patternColor','patternSize','collarColor','sleeveColor','shortsColor','socksColor','playerName','playerNumber','kitFont','textColor','fabricTexture','fabricStrength','fabricScale'];
+const projectStatus=document.getElementById('projectSaveStatus');
+function readProjects(){try{return JSON.parse(localStorage.getItem(projectStorageKey)||'{}')||{}}catch{return {}}}
+function refreshProjects(){const sel=document.getElementById('savedProjectList'),previous=sel.value;sel.replaceChildren(new Option('Seleziona progetto salvato',''));Object.keys(readProjects()).sort().forEach(k=>sel.add(new Option(k,k)));if(readProjects()[previous])sel.value=previous;}
+function saveStatus(t){projectStatus.textContent=t}
+function projectSnapshot(){
+ const fields={};projectFields.forEach(id=>{const el=document.getElementById(id);if(el)fields[id]=el.value});
+ return {v:1,color:chosenColor,pattern:currentPattern,fields,collarCustom,sleeveCustom,shortsCustom,socksCustom,savedAt:new Date().toISOString()};
+}
+document.getElementById('saveProjectBtn').addEventListener('click',()=>{
+ const title=document.getElementById('projectTitleInput').value.trim();
+ if(!title){saveStatus('Inserisci prima un nome per il progetto.');return}
+ try{const all=readProjects();all[title]=projectSnapshot();localStorage.setItem(projectStorageKey,JSON.stringify(all));refreshProjects();document.getElementById('savedProjectList').value=title;saveStatus('Progetto salvato su questo dispositivo. I file PNG dei loghi non sono inclusi.')}catch(e){saveStatus('Salvataggio non disponibile: controlla lo spazio del browser.')}
+});
+document.getElementById('loadProjectBtn').addEventListener('click',()=>{
+ const key=document.getElementById('savedProjectList').value,p=readProjects()[key];
+ if(!p){saveStatus('Seleziona un progetto da caricare.');return}
+ chosenColor=p.color||chosenColor;currentPattern=p.pattern||'solid';
+ for(const [id,value] of Object.entries(p.fields||{})){const el=document.getElementById(id);if(el)el.value=value}
+ patternColor=document.getElementById('patternColor').value;patternSize=Number(document.getElementById('patternSize').value);
+ collarColor=document.getElementById('collarColor').value;sleeveColor=document.getElementById('sleeveColor').value;
+ shortsColor=document.getElementById('shortsColor').value;socksColor=document.getElementById('socksColor').value;
+ collarCustom=!!p.collarCustom;sleeveCustom=!!p.sleeveCustom;shortsCustom=!!p.shortsCustom;socksCustom=!!p.socksCustom;
+ fabricType=document.getElementById('fabricTexture').value;fabricStrength=Number(document.getElementById('fabricStrength').value);fabricScale=Number(document.getElementById('fabricScale').value);
+ document.querySelectorAll('[data-pattern]').forEach(b=>b.classList.toggle('active',b.dataset.pattern===currentPattern));
+ document.querySelectorAll('[data-color]').forEach(b=>b.classList.toggle('active',b.dataset.color.toLowerCase()===chosenColor.toLowerCase()));
+ applyKitColor();updateBackPrint();rebuildShortsNumber();
+ document.getElementById('projectTitleInput').value=key;
+ saveStatus('Progetto caricato. Ricarica manualmente gli eventuali loghi e sponsor.');
+});
+document.getElementById('deleteProjectBtn').addEventListener('click',()=>{
+ const key=document.getElementById('savedProjectList').value;if(!key){saveStatus('Seleziona il progetto da eliminare.');return}
+ if(!confirm('Eliminare il progetto '+key+' da questo dispositivo?'))return;
+ const all=readProjects();delete all[key];localStorage.setItem(projectStorageKey,JSON.stringify(all));refreshProjects();saveStatus('Progetto eliminato.');
+});
+['fabricTexture','fabricStrength','fabricScale'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{
+ fabricType=document.getElementById('fabricTexture').value;fabricStrength=Number(document.getElementById('fabricStrength').value);fabricScale=Number(document.getElementById('fabricScale').value);applyKitColor();
+}));
+refreshProjects();
 
 document.querySelectorAll('[data-pattern]').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('[data-pattern]').forEach(x=>x.classList.remove('active'));
