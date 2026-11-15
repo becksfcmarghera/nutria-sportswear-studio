@@ -143,6 +143,34 @@ font-size:11px;font-weight:700;letter-spacing:.7px;white-space:nowrap}
 .draft-note b{color:#f0c945;font-size:11px;letter-spacing:.08em}
 .draft-note span{color:#c8cbc6;font-size:11px;line-height:1.5}
 
+
+/* Touch layout and accessible controls on phones. */
+.layout>*{min-width:0}button:focus-visible,a:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.mobile-orbit,.return-to-kit{display:none}
+@media(max-width:800px){
+ header{flex-wrap:wrap;padding:14px 16px;gap:12px}.brand-logo{width:56px;height:42px}
+ .brand strong{font-size:13px}.brand span{font-size:9px;letter-spacing:2px}
+ .top-nav{width:100%;flex-wrap:wrap}.top-nav a{flex:1;min-height:44px;font-size:11px}
+ main{padding:22px 12px 84px}.intro h1{font-size:32px}.intro p{font-size:14px}
+ #stage{height:clamp(300px,52svh,450px);touch-action:pan-y}
+ #stage canvas{pointer-events:none;touch-action:pan-y!important}
+ #stage.is-interacting,#stage.is-interacting canvas{touch-action:none!important}
+ #stage.is-interacting canvas{pointer-events:auto}
+ .mobile-orbit{display:block;width:100%;min-height:44px;border-radius:0;border-width:1px 0 0}
+ .mobile-orbit[aria-pressed=true]{background:#302817;color:#f6d56b}
+ .viewer-top{font-size:11px;padding:12px}.viewer-top span:last-child{display:none}
+ .hint{max-width:calc(100% - 24px);font-size:11px;left:12px;bottom:12px}
+ .controls{padding:12px}.section-body{padding:4px 8px 12px}
+ button,.upload-label,summary,select{min-height:44px}.swatch{width:44px;height:44px;min-width:44px}
+ .colors{gap:10px;padding:4px}.products{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .products button{overflow-wrap:anywhere;font-size:12px}
+ input[type=text],input[type=email],input[type=number],textarea,.controls select{font-size:16px}
+ input[type=range]{min-height:44px}.control-section{scroll-margin-top:12px}
+ .return-to-kit:not([hidden]){display:block;position:fixed;bottom:calc(12px + env(safe-area-inset-bottom));right:12px;z-index:30;background:var(--gold);color:#111;font-weight:800;box-shadow:0 4px 24px #0008}
+ footer{padding:0 16px 80px}
+}
+@media(max-width:800px) and (orientation:landscape){#stage{height:320px}}
+
 </style>
 <link rel="stylesheet" href="/fonts/fonts.css"><link rel="stylesheet" href="/fonts/extended.css"></head>
 <body>
@@ -173,6 +201,7 @@ font-size:11px;font-weight:700;letter-spacing:.7px;white-space:nowrap}
     <div id="loading" class="loading">CARICAMENTO KIT 3D…</div>
     <div class="hint">Trascina per ruotare · rotella per zoom</div>
    </div>
+   <button type="button" id="mobileOrbit" class="mobile-orbit" aria-pressed="false" aria-controls="stage">Attiva rotazione 3D</button>
    <div style="padding:14px 18px;border-top:1px solid var(--line)">
     <button id="downloadModel" style="width:100%;margin-bottom:8px">↓ SCARICA MODELLO 3D · GLB</button>
     <button id="downloadPreview" style="width:100%">↓ SCARICA BOZZA PNG · 4 VISTE</button>
@@ -370,6 +399,7 @@ font-size:11px;font-weight:700;letter-spacing:.7px;white-space:nowrap}
  </div>
 </main>
 
+<button id="returnToKit" class="return-to-kit" type="button" hidden>↑ Vedi il kit</button>
 <footer>© Nutria Sportswear · L’anteprima generata dal configuratore è una bozza preliminare e non costituisce approvazione grafica né ordine di produzione.</footer>
 
 

@@ -19,7 +19,8 @@ const camera = new THREE.PerspectiveCamera(35, stage.clientWidth/stage.clientHei
 camera.position.set(0,0,6);
 
 const renderer = new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+const mobileLayout=window.matchMedia('(max-width:800px)');
+renderer.setPixelRatio(Math.min(devicePixelRatio,mobileLayout.matches?1.5:2));
 renderer.setSize(stage.clientWidth,stage.clientHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 stage.appendChild(renderer.domElement);
@@ -28,7 +29,30 @@ const controls = new OrbitControls(camera,renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = .06;
 controls.minDistance = 2;
-controls.maxDistance = 12;
+controls.maxDistance = 16;
+controls.enablePan=false;
+const orbitButton=document.getElementById('mobileOrbit');
+const returnButton=document.getElementById('returnToKit');
+let mobileRotation=false,stageVisible=true;
+function updateTouchMode(){
+ controls.enabled=!mobileLayout.matches||mobileRotation;
+ stage.classList.toggle('is-interacting',mobileLayout.matches&&mobileRotation);
+ orbitButton.setAttribute('aria-pressed',String(mobileRotation));
+ orbitButton.textContent=mobileRotation?'Termina rotazione · scorri la pagina':'Attiva rotazione 3D';
+ stage.querySelector('.hint').textContent=mobileLayout.matches?(mobileRotation?'Un dito per ruotare · due dita per zoom':'Scorri la pagina · attiva la rotazione con il pulsante'):'Trascina per ruotare · rotella per zoom';
+}
+orbitButton.addEventListener('click',()=>{mobileRotation=!mobileRotation;updateTouchMode()});
+mobileLayout.addEventListener('change',()=>{mobileRotation=false;updateTouchMode();resize()});
+returnButton.addEventListener('click',()=>stage.scrollIntoView({behavior:'smooth',block:'center'}));
+if('IntersectionObserver' in window)new IntersectionObserver(entries=>{
+ stageVisible=entries[0].isIntersecting;
+ returnButton.hidden=stageVisible||entries[0].boundingClientRect.top>0;
+},{threshold:.1}).observe(stage);
+updateTouchMode();
+function minimumFitDistance(aspect){
+ const verticalFov=THREE.MathUtils.degToRad(camera.fov);
+ return 1.12*Math.max(3.5/(2*Math.tan(verticalFov/2)),2.7/(2*Math.tan(verticalFov/2)*Math.max(aspect,.2)));
+}
 
 scene.add(new THREE.HemisphereLight(0xffffff,0x333333,2.2));
 const key = new THREE.DirectionalLight(0xffffff,3); key.position.set(3,4,5); scene.add(key);
@@ -88,7 +112,7 @@ function fitKit(){
   realKit.updateMatrixWorld(true);
 
   kitBox = new THREE.Box3().setFromObject(realKit);
-  camera.position.set(0,0,6);
+  camera.position.set(0,0,minimumFitDistance(camera.aspect));
   controls.target.set(0,0,0);
   controls.update();
 }
@@ -1659,11 +1683,17 @@ document.getElementById('downloadPreview').addEventListener('click',async()=>{
 
 function resize(){
   const w=stage.clientWidth,h=stage.clientHeight;
+  if(!w||!h)return;
+  const previousFit=minimumFitDistance(camera.aspect);
+  const offset=camera.position.clone().sub(controls.target);
   camera.aspect=w/h;
+  offset.multiplyScalar(minimumFitDistance(camera.aspect)/previousFit);
+  camera.position.copy(controls.target).add(offset);
   camera.updateProjectionMatrix();
   renderer.setSize(w,h);
 }
 window.addEventListener('resize',resize);
+if('ResizeObserver' in window)new ResizeObserver(resize).observe(stage);
 
 
 const nutriaLogoSizeInput=document.getElementById('nutriaLogoSize');
@@ -1715,8 +1745,7 @@ document.getElementById('backNumberY')?.addEventListener('input',e=>{backNumberY
 
 function animate(){
   requestAnimationFrame(animate);
-  controls.update();
-  renderer.render(scene,camera);
+  if(!document.hidden&&stageVisible){controls.update();renderer.render(scene,camera);}
 }
 animate();
 

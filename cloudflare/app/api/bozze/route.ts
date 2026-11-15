@@ -1,4 +1,5 @@
 import {env} from 'cloudflare:workers';
+import {notifyDraft} from '../../../server/notifications.mjs';
 import {isAdmin} from '../../admin';
 export async function GET(){if(!await isAdmin())return Response.json({error:'Accesso riservato'}, {status:403});const r=await env.DB.prepare('SELECT * FROM drafts ORDER BY created DESC').all();return Response.json(r.results,{headers:{'Cache-Control':'no-store'}})}
 export async function POST(req:Request){
@@ -15,6 +16,12 @@ export async function POST(req:Request){
  }else if(file.size>10000000||!['image/png','image/jpeg','image/webp'].includes(file.type))throw new Error('Immagine non valida');const key=`drafts/${id}/${name}`;await env.BUCKET.put(key,await file.arrayBuffer(),{httpMetadata:{contentType:file.type}});files[name]=key}}
  await env.DB.prepare('INSERT INTO drafts (id,created,details,files,status,notes) VALUES (?,?,?,?,?,?)').bind(id,new Date().toISOString(),JSON.stringify(details),JSON.stringify(files),'Nuova','').run();
  }catch(e){await Promise.all(Object.values(files).map(k=>env.BUCKET.delete(k)));throw e}
+ // The draft already exists: notification failure must never lose the request
+ // or ask the customer to submit it twice.
+ try{
+ details.notification=await notifyDraft({endpoint:env.NOTIFICATION_FORM_URL,origin:new URL(req.url).origin,id,details});
+ await env.DB.prepare('UPDATE drafts SET details=? WHERE id=?').bind(JSON.stringify(details),id).run();
+ }catch{console.error('bozza-notification-status-failed');}
  return Response.json({id},{status:201});
  }catch(error){console.error('bozza-save-failed',error instanceof Error?error.message:'unknown');return Response.json({error:'Impossibile salvare la bozza. Riprova.'},{status:500})}}
 export async function PATCH(req:Request){if(!await isAdmin())return Response.json({error:'Accesso riservato'},{status:403});if(req.headers.get('origin')!==new URL(req.url).origin)return new Response(null,{status:403});const d=await req.json();if(!['Nuova','In lavorazione','Confermata'].includes(d.status))return new Response(null,{status:400});await env.DB.prepare('UPDATE drafts SET status=?,notes=? WHERE id=?').bind(d.status,String(d.notes).slice(0,10000),d.id).run();return Response.json({ok:true})}
