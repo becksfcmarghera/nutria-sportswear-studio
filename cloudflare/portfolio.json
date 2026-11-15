@@ -1,0 +1,74 @@
+[
+  {
+    "id": "portfolio-0",
+    "team": "FC Beck’s",
+    "url": "/assets/projects/becks/0adc34d4-7c74-4928-9189-e43a8c44349f.JPG",
+    "archived": true
+  },
+  {
+    "id": "portfolio-1",
+    "team": "FC Beck’s",
+    "url": "/assets/projects/becks/4fe47a80-a3ac-4526-a51f-fac4e605cb4b.JPG",
+    "archived": true
+  },
+  {
+    "id": "portfolio-2",
+    "team": "FC Beck’s",
+    "url": "/assets/projects/becks/d051f0f3-510f-4159-b86d-ee17b4e20cd1.JPG",
+    "archived": true
+  },
+  {
+    "id": "portfolio-3",
+    "team": "FC Beck’s",
+    "url": "/assets/projects/becks/fc14f72e-99c7-4c5d-b2e4-384b60a43cc7.JPG",
+    "archived": true
+  },
+  {
+    "id": "portfolio-4",
+    "team": "Hateful 8",
+    "url": "/assets/projects/hateful/IMG_8715.jpeg",
+    "archived": true
+  },
+  {
+    "id": "portfolio-5",
+    "team": "Hateful 8",
+    "url": "/assets/projects/hateful/IMG_8717.jpeg",
+    "archived": true
+  },
+  {
+    "id": "portfolio-6",
+    "team": "Hateful 8",
+    "url": "/assets/projects/hateful/IMG_8718.jpeg",
+    "archived": true
+  },
+  {
+    "id": "portfolio-7",
+    "team": "Hateful 8",
+    "url": "/assets/projects/hateful/IMG_8721.jpeg",
+    "archived": true
+  },
+  {
+    "id": "portfolio-8",
+    "team": "Hateful 8",
+    "url": "/assets/projects/hateful/IMG_8723.jpeg",
+    "archived": true
+  },
+  {
+    "id": "portfolio-9",
+    "team": "Hateful 8",
+    "url": "/assets/projects/hateful/IMG_8724.jpeg",
+    "archived": true
+  },
+  {
+    "id": "portfolio-10",
+    "team": "Hateful 8",
+    "url": "/assets/projects/hateful/IMG_8731.jpeg",
+    "archived": true
+  },
+  {
+    "id": "portfolio-11",
+    "team": "Hateful 8",
+    "url": "/assets/projects/hateful/IMG_8733.jpeg",
+    "archived": true
+  }
+]
