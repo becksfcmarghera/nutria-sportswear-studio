@@ -16,7 +16,12 @@
       "/bozze",
       "/progetti",
       "/studio",
-      "/studio.html"
+      "/studio.html",
+      "/admin",
+      "/admin/*",
+      "/bozze/",
+      "/manage.html",
+      "/configura-admin.html"
     ],
     "html_handling": "none"
   },
