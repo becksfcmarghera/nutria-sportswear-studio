@@ -16,7 +16,12 @@
       "/bozze",
       "/progetti",
       "/studio",
-      "/studio.html"
+      "/studio.html",
+      "/admin",
+      "/admin/*",
+      "/bozze/",
+      "/manage.html",
+      "/configura-admin.html"
     ],
     "html_handling": "none"
   },
@@ -36,6 +41,8 @@
   "vars": {
     "ADMIN_EMAIL": "becksfcmarghera@gmail.com",
     "SITE_LABEL": "Nutria Sportswear Studio",
-    "NOTIFICATION_FORM_URL": ""
+    "NOTIFICATION_FORM_URL": "",
+    "ACCESS_TEAM_DOMAIN": "https://frosty-salad-873a.cloudflareaccess.com",
+    "ACCESS_AUD": "756a0b42a512a679cbb03b60440073e8c6ef2571c70599cd82dcd0cc9bda8e55"
   }
 }
