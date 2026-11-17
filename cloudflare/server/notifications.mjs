@@ -14,8 +14,7 @@ export async function notifyDraft({endpoint,origin,id,details},send=fetch){
     'Email: '+String(details.email).slice(0,254),
     'Quantità: '+String(details.qty).slice(0,20),
     'Note: '+String(details.notes||'').slice(0,10000),
-    'Apri l’area privata per il PNG, il modello 3D e i dettagli:',
-    new URL('/bozze',origin).href
+    'PNG, modello 3D e dettagli disponibili nell’area privata Nutria Sportswear.'
   ].join('\n'));
   data.set('_formsubmit_id','');
   try{
