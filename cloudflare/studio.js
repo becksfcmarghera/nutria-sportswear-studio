@@ -1651,8 +1651,7 @@ document.getElementById('quoteForm').addEventListener('submit',async e=>{
     const response=await fetch('/api/bozze',{method:'POST',body:data});
     const result=await response.json();
     if(!response.ok)throw new Error(result.error||'Salvataggio non riuscito');
-    button.textContent='BOZZA SALVATA ✓';
-    alert('Bozza salvata. La trovi nell’area Bozze. Riferimento: '+result.id);
+    button.textContent='BOZZA INVIATA ✓';
     button.disabled=false;
   }catch(error){
     console.error('Invio bozza:',error);
