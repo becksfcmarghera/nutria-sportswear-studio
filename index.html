@@ -407,14 +407,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     <summary><span class="step-dot">4</span><span><b>Invia la tua bozza</b><small>La useremo come base per il progetto definitivo</small></span></summary>
     <div class="section-body">
      <div class="draft-note"><b>ANTEPRIMA PRELIMINARE</b><span>Questa configurazione rappresenta una bozza iniziale e non il file grafico definitivo. Una volta ricevuta, Nutria Sportswear rifinirà il design e ti invierà la proposta finale da approvare prima della produzione.</span></div>
-     <form id="quoteForm" action="https://formsubmit.io/f/94d38fbe-8b37-4c62-8292-ee2fabf4404d" method="POST" enctype="multipart/form-data">
+     <form id="quoteForm" action="https://formsubmit.io/f/e2277192-01ac-4a19-bb66-770b5a075b74" method="POST" enctype="multipart/form-data">
       <div class="two-col"><input required id="name" type="text" placeholder="Nome referente"><input required id="team" type="text" placeholder="Squadra / società"></div>
       <div class="two-col"><input required id="email" type="email" placeholder="Email"><input id="qty" type="number" min="1" value="10" placeholder="Quantità"></div>
       <textarea id="notes" placeholder="Note, esigenze, quantità, scadenze..."></textarea>
-      <!-- Campi collegati al form Live del pannello FormSubmit.io -->
+      <!-- Campi collegati al modulo Nutria Sportswear su FormSubmit.io -->
       <input type="hidden" id="fsName" name="Nome e Cognome">
       <input type="hidden" id="fsEmail" name="Email">
-      <input type="hidden" id="fsTeam" name="Nome squadra ">
+      <input type="hidden" id="fsTeam" name="Nome squadra">
       <input type="hidden" id="fsQty" name="Quantità kit">
       <textarea id="fsMessage" name="Note e richieste" hidden></textarea>
       <input type="file" id="fsAttachment" name="Bozza PNG" accept="image/png" style="display:none">
@@ -2060,7 +2060,7 @@ document.getElementById('quoteForm').addEventListener('submit',async e=>{
     const safeTeam=team.replace(/[^a-z0-9_-]+/gi,'-').replace(/^-+|-+$/g,'')||'kit';
     const pngFile=new File([png],`bozza-nutria-${safeTeam}-4-viste.png`,{type:'image/png'});
 
-    // Nome, Email e Long text sono i tre campi del form pubblicato nel pannello.
+    // Popola i campi richiesti dal modulo Nutria Sportswear.
     document.getElementById('fsName').value=document.getElementById('name').value.trim();
     document.getElementById('fsEmail').value=document.getElementById('email').value.trim();
     document.getElementById('fsTeam').value=document.getElementById('team').value.trim();
